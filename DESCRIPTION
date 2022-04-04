@@ -1,0 +1,17 @@
+Package: RegCombin
+Type: Package
+Title: Linear regression under Data Combination
+Version: 0.1.1
+Author: person("Xavier", "D'Haultfoeuille", email = "xavier.dhaultfoeuille@ensae.fr", role = c("aut")),
+    person("Christophe", "Gaillac", email = "christophe.gaillac@ensae.fr", role = c("aut", "cre"))), 
+    c(person("Arnaud", "Maurel", email = "arnaud.maurel@duke.edu", role = c("aut"))
+Maintainer: The package maintainer <christophe.gaillac@economics.ox.ac.uk>
+Description: We implement linear regression when the outcome of interest and some of the covariates are observed in two different datasets that cannot be linked, based on D'Haultfoeuille, Gaillac, and Maurel (2022). The package allows for common regressors observed in both datasets, and for sign constraints on the effect of covariates on the outcome of interest.
+License: GPL-3
+Encoding: UTF-8
+Suggests: knitr, rmarkdown
+VignetteBuilder: knitr
+RoxygenNote: 7.1.1
+Imports: R.matlab,geometry,pracma,sfsmisc,snowfall,RationalExp,Hmisc
+NeedsCompilation: no
+Packaged: 2022-04-04 14:40:59 UTC; chris
