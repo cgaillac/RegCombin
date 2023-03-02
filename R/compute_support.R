@@ -11,36 +11,36 @@
 #' @param dimXnc the dimension of the noncommon regressors Xnc.
 #' @param nb_pts the constant C in DGM for the epsilon_0, the lower bound on the grid for epsilon, taken equal to nb_pts*ln(n)/n. Default is 1 without regressors Xc, 3 with Xc.
 #' @param sam0 the directions q to compute the variance bounds on the radial function.
-#' @param kp0 the matrix containing the directions q and the selected epsilon(q).
-#' @param data_k the number of points for the grid search on epsilon. Default is 30. If NULL, then epsilon is taken fixed equal to kp.
-#' @param Opt the option of the method to compute the critical values, either "boot" (numerical bootstrap) or "subsampling". Default is numerical bootstrap.
+#' @param eps_default0 the matrix containing the directions q and the selected epsilon(q).
+#' @param grid the number of points for the grid search on epsilon. Default is 30. If NULL, then epsilon is taken fixed equal to kp.
 #' @param lim the limit number of observations under which we do no compute the conditional variance.
 #' @param weights_x the sampling weights for the dataset (Xnc,Xc).
 #' @param weights_y  the sampling weights for the dataset (Y,Xc).
+#' @param constraint a vector indicating the different constraints in a vector of the size of X_c indicating the type of constraints, if any on f(X_c) : "concave", "concave", "nondecreasing", "nonincreasing", "nondecreasing_convex", "nondecreasing_concave",  "nonincreasing_convex", "nonincreasing_concave", or NULL for none. Default is NULL, no contraints at all.#' @param nc_sign if sign restrictions on the non-commonly observed regressors Xnc: -1 for a minus sign, 1 for a plus sign, 0 otherwise. Default is NULL, i.e. no constraints.
 #' @param c_sign sign restrictions on the commonly observed regressors: -1 for a minus sign, 1 for a plus sign, 0 otherwise. Default is NULL, i.e. no constraints.
 #' @param nc_sign sign restrictions on the non-commonly observed regressors Xnc: -1 for a minus sign, 1 for a plus sign, 0 otherwise. Default is NULL, i.e. no constraints.
 #' @param refs0 indicating the positions in the vector values corresponding to the components of betac.
 #' @param type Equal to "both".
 #' @param meth  the method for the choice of epsilon, either "adapt", i.e. adapted to the direction or "min" the minimum over the directions. Default is "adapt".
-#' @param trunc equal to 2, for the definition of epsilon.
-#' @param boot_par the numerical bootstrap parameter. Default is 0.3 without Xc, 0.35 with Xc.
 #' @param bc  if TRUE compute also the bounds on betac. Default is FALSE.
-#' @param winsor indicates if winsorisation. Default is FALSE.
-#' @param version version of the computation of the ratio, "first" is a degraded version but fast; "second" is a correct version but slower. Default is "second".
+#' @param version version of the computation of the ratio, "first" indicates no weights, no ties, same sizes of the two datasets; "second" otherwise. Default is "second".
+#' @param R2bound the lower bound on the R2 of the long regression if any. Default is NULL.
+#' @param values_sel the selected values of Xc for the conditioning. Default is NULL.
+#' @param ties Boolean indicating if there are ties in the dataset. Default is FALSE.
 #'
 #' @return
 #' a matrix containing the considered directions and the computed value of the support function.
 #'
-#' @export
-#'
-#' @examples
 compute_support <- function(sample1 = NULL,Xc_x,Xnc,Xc_y,Y,
                             values ,dimXc,dimXnc,nb_pts,
-                            sam0, kp0,data_k, Opt="subsampling",
+                            sam0, eps_default0,grid,
                             lim = 30,weights_x = NULL,weights_y = NULL,
+                            constraint = NULL,
                             c_sign = NULL, nc_sign= NULL,
-                            refs0=NULL,type="both",meth="adapt",trunc=2,boot_par= 0.45, bc = FALSE,
-                            winsor = FALSE, version="first"){
+                            refs0=NULL,type="both",meth="adapt", bc = FALSE,
+                            version="first",
+                            R2bound=NULL,  values_sel=NULL,
+                            ties=FALSE){
   mat_var_low= NULL
   if(is.null(weights_x)){
     weights_x= rep(1/dim(Xnc)[1],dim(Xnc)[1])
@@ -54,55 +54,67 @@ compute_support <- function(sample1 = NULL,Xc_x,Xnc,Xc_y,Y,
 
 
   if(!is.null(sample1)){
-    if(Opt == "subsampling"){
-      n_x = dim(Xnc)[1]
-      bsx = sampling_rule(n_x)
-      bb = sample(1:n_x,bsx, replace=FALSE)
+    n_x = dim(Xnc)[1]
+    n_y = dim(Y)[1]
+    n_xy = min(n_x,n_y)
+    T_xy  = (n_y/(n_x+n_y))*n_x
+
+    bs = floor(sampling_rule(T_xy))
+
+    if(version !="first"){
+
+      ##
+      # n_x = dim(Xnc)[1]
+      bb = sample(1:n_x,n_x-bs, replace=FALSE)
+      # bb = 3:4
       if(!is.null(Xc_x)){
-        Xc_xb = matrix(Xc_x[bb,],bsx,dimXc)
+        Xc_xb = matrix(Xc_x,n_x,dimXc)
       }
-      Xncb = matrix(Xnc[bb,],bsx,dimXnc)
-      weights_x =  matrix(weights_x[bb],bsx,1)
+      Xncb = matrix(Xnc,n_x,dimXnc)
+      weights_x =  matrix(weights_x,n_x,1)
+      weights_x[bb] <-0
       weights_x = weights_x/sum(weights_x)
 
-      n_y = dim(Y)[1]
-      bsy = sampling_rule(n_y)
-      bby = sample(1:n_y,bsy, replace=FALSE)
+      # n_y = dim(Y)[1]
+      bby = sample(1:n_y,n_y-bs, replace=FALSE)
+      # bby=1:2
       if(!is.null(Xc_y)){
-        Xc_yb = matrix(Xc_y[bby,],bsy,dimXc)
+        Xc_yb = matrix(Xc_y,n_y,dimXc)
       }
-      Yb = matrix(Y[bby,],bsy,1)
-      weights_y =  matrix(weights_y[bby],bsy,1)
+      Yb = matrix(Y,n_y,1)
+      weights_y =  matrix(weights_y,n_y,1)
+      weights_y[bby] <-0
       weights_y = weights_y/sum(weights_y)
 
     }else{
-
-      n_x = dim(Xnc)[1]
-      n_y = dim(Y)[1]
-      es = min(n_y,n_x)^(-boot_par)  ## epsilon_n
-      drawsx = rmultinom(1, n_x, rep(1/n_x,n_x))
-      prob0 =  drawsx
-      prob0 = prob0/sum( prob0,na.rm=T)
-
+      #
+      #
+      # n_x = dim(Xnc)[1]
+      bb = sample(1:n_x,bs, replace=FALSE)
+      # bb = c(1:2,5:n_x)
       if(!is.null(Xc_x)){
-        Xc_xb =matrix(Xc_x,n_x,dimXc)
+        Xc_xb = matrix(Xc_x[bb,],bs,dimXc)
       }
-      Xncb = matrix(Xnc,n_x,dimXnc)
-      weights_x =  matrix(weights_x*prob0,n_x,1)
+      Xncb = matrix(Xnc[bb,],bs,dimXnc)
+      weights_x =  matrix(weights_x[bb],bs,1)
+      # weights_x[bb] <-0
       weights_x = weights_x/sum(weights_x)
+      n_x = dim(Xncb)[1]
 
-      drawsy = rmultinom(1, n_y, rep(1/n_y,n_y))
-      prob0 =drawsy
-      prob0 = prob0/sum( prob0,na.rm=T)
+
+      # n_y = dim(Y)[1]
+      bby = sample(1:n_y,bs, replace=FALSE)
+      #  bby = 3:n_y
       if(!is.null(Xc_y)){
-        Xc_yb = matrix(Xc_y,n_y,dimXnc)
+        Xc_yb = matrix(Xc_y[bby,],bs,dimXc)
       }
-      Yb =matrix(Y,n_y,1)
-      weights_y =  matrix(weights_y*prob0,n_y,1)
+      Yb = matrix(Y[bby],bs,1)
+      weights_y =  matrix(weights_y[bby],bs,1)
+      # weights_y[bby] <-0
       weights_y = weights_y/sum(weights_y)
-
-
+      n_y = dim(Yb)[1]
     }
+
   }else{
     ## point estimate
     weights_xs = NULL
@@ -125,16 +137,18 @@ compute_support <- function(sample1 = NULL,Xc_x,Xnc,Xc_y,Y,
 
   nbCores_dir = 1
 
+
   if(nbCores_dir==1){
-    out1 = lapply(1:dim(sam0)[1],compute_support_paral,sam0,Xnc,  kp0, data_k,dimXc,dimXnc,Xc_xb=NULL ,Xncb,Xc_yb=NULL,Yb,
-                  values,Opt,weights_x,weights_y, c_sign,
-                  nc_sign,refs0,meth, boot_par,  T_xy  ,
-                  bc, winsor, version, weights_xs, weights_ys)
+    out1 = lapply(1:dim(sam0)[1],compute_support_paral,sam0,Xnc,  eps_default0, grid,dimXc,dimXnc,Xc_xb= Xc_xb ,Xncb,Xc_yb= Xc_yb,Yb,
+                  values, weights_x,weights_y, constraint , c_sign,
+                  nc_sign,refs0,meth,   T_xy  ,
+                  bc, version, R2bound,  values_sel,ties)
+
   }else{
-    out1 =  sfLapply(1:dim(sam0)[1],compute_support_paral,sam0,Xnc,  kp0, data_k,dimXc,dimXnc,Xc_xb=NULL ,Xncb,Xc_yb=NULL,Yb,
-                     values,Opt,weights_x,weights_y, c_sign,
-                     nc_sign,refs0,meth, boot_par,  T_xy ,
-                     bc,winsor, version, weights_xs, weights_ys)
+    out1 =  sfLapply(1:dim(sam0)[1],compute_support_paral,sam0,Xnc,  eps_default0, grid,dimXc,dimXnc,Xc_xb= Xc_xb ,Xncb,Xc_yb= Xc_yb,Yb,
+                     values,weights_x,weights_y, constraint , c_sign,
+                     nc_sign,refs0,meth, T_xy ,
+                     bc,  version, R2bound,  values_sel,ties)
   }
   out11 <- unlist(out1)
 

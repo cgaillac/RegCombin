@@ -1,4 +1,4 @@
-#' Function for the data-driven selection of the epsilon tuning parameter
+#' Function for the data-driven selection of the epsilon tuning parameter,  adapted to the point identification test.
 #'
 #' @param sam1 the matrix containing the directions q on which to compute the selected rule for epsilon(q)
 #' @param eps_default If grid =NULL, then epsilon is taken equal to eps_default.
@@ -27,12 +27,13 @@
 #' @return
 #' a matrix containing the values of the selected epsilon(q) for q directions in sam1.
 #'
-select_epsilon <- function(sam1,eps_default, Xc_x,Xnc,Xc_y,Y,
-                           values,dimXc,dimXnc,
-                           nb_pts,lim ,weights_x,weights_y,
-                           refs0,
-                           grid=30,constraint =NULL, c_sign=NULL,nc_sign=NULL, meth="adapt",
-                           nbCores=1,  version_sel = "first", alpha=0.05, ties =FALSE){
+
+select_epsilon_test <- function(sam1,eps_default, Xc_x,Xnc,Xc_y,Y,
+                                values,dimXc,dimXnc,
+                                nb_pts,lim ,weights_x,weights_y,
+                                refs0,
+                                grid=30,constraint =NULL, c_sign=NULL,nc_sign=NULL, meth="adapt",
+                                nbCores=1,  version_sel = "first", alpha=0.05, ties =FALSE){
 
 
   version0 = version_sel
@@ -53,14 +54,38 @@ select_epsilon <- function(sam1,eps_default, Xc_x,Xnc,Xc_y,Y,
   n_x = dim(Xnc)[1]
   n_y = dim(Y)[1]
 
+  hard = FALSE
+  pt= FALSE
 
   if(is.null(values)){
 
     n_xy = min(n_x,n_y)
     T_xy  = (n_y/(n_x+n_y))*n_x
 
+    # eps0 =2*log(T_xy)
+    # eps_grid = seq(min(C0,eps0/T_xy^(3/4)),C0,length.out=grid)
+
+    ## OK
     eps0 = nb_pts*pmax(9,log(T_xy))
     eps_grid = seq(min(C0,eps0/T_xy^(3/4)),C0,length.out=grid)
+
+    # eps0 =  nb_pts*7.5*log(T_xy)
+    # eps_grid = seq(min(C0,eps0/T_xy),C0,length.out=grid)
+
+    # nb_pts=1
+    # eps0 = nb_pts*0.3*log(n_xy)
+    # eps_grid = seq(min(C0,eps0/n_xy^(2/3)),C0,length.out=grid)
+
+    # eps0 = nb_pts*log(T_xy)
+    # eps_grid = seq(min(C0,eps0/T_xy),C0,length.out=grid)
+
+    # T_xy =200
+    #
+    # 5*log(T_xy)/T_xy
+    # 0.8*log(T_xy)/T_xy^(2/3)
+
+    # eps0 = 1.3*log(T_xy)
+    # eps_grid = seq(min(C0,eps0/T_xy^(0.75)),C0,length.out=grid)
 
     eps1= matrix(0.5,dim(sam1)[1],1)
     ##################################################################
@@ -83,17 +108,22 @@ select_epsilon <- function(sam1,eps_default, Xc_x,Xnc,Xc_y,Y,
     # pt=FALSE
     # set.seed(1112)
     if(nbCores>1){
-      res0 <- sfLapply(1:Bsamp0, compute_radial,Xc_x,Xnc,Xc_y,Y,values=NULL,dimXc,dimXnc,nb_pts,
+      res0 <- sfLapply(1:Bsamp0, compute_radial_test,Xc_x,Xnc,Xc_y,Y,values=NULL,dimXc,dimXnc,nb_pts,
                        sam0= sam0_eps_default0, eps_default0=NULL, grid ,lim ,weights_x,weights_y, constraint =NULL,
                        c_sign = NULL, nc_sign  =NULL,
                        refs0=NULL,type="up",meth=meth, version =version0,ties =ties)
 
     }else{
-      res0 <- lapply(1:Bsamp0, compute_radial,Xc_x,Xnc,Xc_y,Y,values=NULL,dimXc,dimXnc,nb_pts,
+      res0 <- lapply(1:Bsamp0, compute_radial_test,Xc_x,Xnc,Xc_y,Y,values=NULL,dimXc,dimXnc,nb_pts,
                      sam0= sam0_eps_default0, eps_default0=NULL, grid ,lim  ,weights_x,weights_y, constraint =NULL,
                      c_sign = NULL, nc_sign  =NULL,
                      refs0=NULL,type="up",meth=meth, version =version0,ties =ties)
     }
+
+    # compute_radial_test(1, Xc_x,Xnc,Xc_y,Y,values=NULL,dimXc,dimXnc,nb_pts,
+    # sam0= sam0_eps_default0, eps_default0=NULL, grid ,lim  ,weights_x,weights_y, constraint =NULL,
+    # c_sign = NULL, nc_sign  =NULL,
+    # refs0=NULL,type="up",meth=meth, version =version0,ties =ties,  pt=pt)
 
 
     mat_varb= matrix(0,Bsamp0,dim(sam0_eps_default0)[1])
@@ -128,14 +158,8 @@ select_epsilon <- function(sam1,eps_default, Xc_x,Xnc,Xc_y,Y,
       eps_fin = eps1 #pmin(0.5,2*eps1)  #eps1
     }
 
-
-    ##############################################################################################################
     ##############################################################################################################
   }else{
-
-    ##############################################################################################################
-    ############# If Xc ##########################################################################################
-    ##############################################################################################################
 
     if(meth=="min"){
       # min
@@ -182,8 +206,22 @@ select_epsilon <- function(sam1,eps_default, Xc_x,Xnc,Xc_y,Y,
         n_xy= min(n_x,n_y)
         T_xy=  (n_y/(n_x+n_y))*n_x
 
-        eps0 = nb_pts*pmax(9, 5*log(T_xy))
+        # eps0 = 7*log(T_xy)
+        # eps_grid = seq(min(C0,eps0/T_xy),C0,length.out=grid)
+
+        # eps0 = 3.5*log(T_xy)
+        # eps_grid = seq(min(C0,eps0/T_xy^(3/4)),C0,length.out=grid)
+
+        # OK
+        # eps0 = 3*log(T_xy)
+        # eps_grid = seq(min(C0,eps0/T_xy^(3/4)),C0,length.out=grid)
+
+        eps0 = nb_pts*pmax(9,5*log(T_xy))
         eps_grid = seq(min(C0,eps0/T_xy^(3/4)),C0,length.out=grid)
+
+
+        # eps0 = nb_pts*pmax(2,log(T_xy))
+        # eps_grid = seq(min(C0,eps0/T_xy^(3/4)),C0,length.out=grid)
 
         eps1= matrix(0.5,dim(sam1)[1],1)
 
@@ -202,16 +240,23 @@ select_epsilon <- function(sam1,eps_default, Xc_x,Xnc,Xc_y,Y,
                                       c_sign = NULL, nc_sign  =NULL,refs0,type="both",meth=meth, version =version0,ties =ties)
 
         if(nbCores>1){
-          res0 <- sfLapply(1:Bsamp0, compute_radial,Xc_x=NULL,Xnc=Xp,Xc_y=NULL,Y=Yp,values=NULL,dimXc=0,dimXnc,nb_pts,
+          res0 <- sfLapply(1:Bsamp0, compute_radial_test,Xc_x=NULL,Xnc=Xp,Xc_y=NULL,Y=Yp,values=NULL,dimXc=0,dimXnc,nb_pts,
                            sam0=  sam0_eps_default0 , eps_default0 =NULL, grid,lim,weights_x=weights_xp,weights_y=weights_yp,constraint =NULL,c_sign = NULL, nc_sign  =NULL,
                            refs0=NULL, type="up",meth=meth, version =version0,ties =ties)
 
         }else{
-          res0 <- lapply(1:Bsamp0, compute_radial,Xc_x=NULL,Xnc=Xp,Xc_y=NULL,Y=Yp,values=NULL,dimXc=0,dimXnc,nb_pts,
+          res0 <- lapply(1:Bsamp0, compute_radial_test,Xc_x=NULL,Xnc=Xp,Xc_y=NULL,Y=Yp,values=NULL,dimXc=0,dimXnc,nb_pts,
                          sam0=  sam0_eps_default0 , eps_default0 =NULL, grid,lim,weights_x=weights_xp,weights_y=weights_yp,constraint =NULL,c_sign = NULL, nc_sign  =NULL,
                          refs0=NULL,type="up",meth=meth,
                          version =version0,ties =ties)
         }
+
+        # set.seed(22)
+        # compute_radial_test(1,Xc_x=NULL,Xnc=Xp,Xc_y=NULL,Y=Yp,values=NULL,dimXc=0,dimXnc,nb_pts,
+        # sam0=  sam0_eps_default0 , eps_default0 =NULL, grid,lim,weights_x=weights_xp,weights_y=weights_yp,constraint =NULL,c_sign = NULL, nc_sign  =NULL,
+        # refs0=NULL,type="up",meth=meth,
+        # version =version0,ties =ties)
+
 
         mat_varb= matrix(0,Bsamp0,dim(sam0_eps_default0)[1])
         for(b in 1:Bsamp0){
@@ -242,7 +287,7 @@ select_epsilon <- function(sam1,eps_default, Xc_x,Xnc,Xc_y,Y,
         eps_fin[,1] = min(eps1)
       }else{
         # adapt
-        eps_fin[,k] = eps1
+        eps_fin[,k] = eps1 # pmin(0.5,2*eps1) #eps1
       }
 
     }

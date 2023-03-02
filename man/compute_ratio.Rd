@@ -2,37 +2,27 @@
 % Please edit documentation in R/compute_ratio.R
 \name{compute_ratio}
 \alias{compute_ratio}
-\title{Function to compute the main statistic for the bootstrap replications}
+\title{Function to compute the main statistic for the point estimate}
 \usage{
 compute_ratio(
-  x_kp0,
+  x_eps0,
   Xp,
   Yp,
   for_critY,
   dimXnc,
   weights_xp,
   weights_yp,
-  T_xy1,
-  T_xy,
-  es,
   version = "first",
-  trunc = 2,
-  ratio_ref = NULL,
-  Yp_ref = NULL,
-  Xp_ref = NULL,
-  weights_yp_ref = NULL,
-  weights_xp_ref = NULL,
-  Opt = "boot",
   grid_I = NULL,
-  winsor = FALSE
+  ties = FALSE
 )
 }
 \arguments{
-\item{x_kp0}{a matrix containing the directions to compute the radial function, and the associated choice epsilon(q).}
+\item{x_eps0}{a matrix containing the directions to compute the radial function, and the associated choice epsilon(q).}
 
-\item{Xp}{the bootstraped or subsampled observations of the noncommon regressor (possibly conditional on Xc).}
+\item{Xp}{the observations of the noncommon regressor (possibly conditional on Xc).}
 
-\item{Yp}{the  bootstraped or subsampled observations of the outcome variable.}
+\item{Yp}{the observations of the outcome variable.}
 
 \item{for_critY}{the numerator of the ratio R for the point estimate of the radial function, on the grid grid_I;}
 
@@ -42,35 +32,15 @@ compute_ratio(
 
 \item{weights_yp}{the sampling or bootstrap weights for the dataset (Y,Xc).}
 
-\item{T_xy1}{the apparent sample size taking into account the difference in the two datasets.}
+\item{version}{version of the computation of the ratio, "first" indicates no weights, no ties, same sizes of the two datasets; "second" otherwise. Default is "second".}
 
-\item{T_xy}{the apparent sample size, possibly conditional on Xc, the taking into account the difference in the two datasets.}
+\item{grid_I}{the grid of alpha on which we evaluate the ratio R to compute the point estimate of the radial function.}
 
-\item{es}{the numerical bootstrap parameter delta_n.}
-
-\item{version}{version of the computation of the ratio, "first" is a degraded version but fast; "second" is a correct version but slower. Default is "second".}
-
-\item{trunc}{equal to 2, for the definition of epsilon.}
-
-\item{ratio_ref}{the point estimate of the ratio R in the radial function.}
-
-\item{Yp_ref}{the observations of the outcome variable. DEfault is NULL.}
-
-\item{Xp_ref}{the observations of the noncommon regressor (possibly conditional on Xc). DEfault is NULL.}
-
-\item{weights_yp_ref}{the sampling weights for the dataset (Y,Xc).}
-
-\item{weights_xp_ref}{the sampling  weights for the dataset (Xnc,Xc).}
-
-\item{Opt}{the option of the method to compute the critical values, either "boot" (numerical bootstrap) or "subsampling". Default is numerical bootstrap.}
-
-\item{grid_I}{the grid of alpha on which we evaluate the ratio R to compute the point estimate of the radial function. Default is NULLL.}
-
-\item{winsor}{indicates if winsorisation. Default is FALSE.}
+\item{ties}{binary value handling the ties, default is FALSE.}
 }
 \value{
-the value of the bootstraped/subsampled version of the radial function using the DGM method
+the value of the point estimate of the radial function using the DGM method.
 }
 \description{
-Function to compute the main statistic for the bootstrap replications
+Function to compute the main statistic for the point estimate
 }

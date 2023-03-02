@@ -6,9 +6,9 @@
 \usage{
 compute_bnds_betac(
   sample1 = NULL,
-  Opt1,
   info0,
   values,
+  constraint = NULL,
   c_sign0,
   nc_sign0,
   refs0,
@@ -16,20 +16,19 @@ compute_bnds_betac(
   nc_var,
   sam0,
   info1 = NULL,
-  T_xy = NULL,
-  es = NULL,
   constr = TRUE,
-  var = NULL
+  R2bound = NULL,
+  values_sel = NULL
 )
 }
 \arguments{
 \item{sample1}{if NULL compute the point estimate, if a natural number then evaluate a bootstrap or subsampling replication.}
 
-\item{Opt1}{the option of the method to compute the critical values, either "boot" (numerical bootstrap) or "subsampling". Default is numerical bootstrap.}
-
 \item{info0}{the results of the estimates (point and bootstrap/subsampling replications) for betanc. No default.}
 
 \item{values}{the different unique points of support of the common regressor Xc.}
+
+\item{constraint}{a vector indicating the different constraints in a vector of the size of X_c indicating the type of constraints, if any on f(X_c) : "concave", "concave", "nondecreasing", "nonincreasing", "nondecreasing_convex", "nondecreasing_concave",  "nonincreasing_convex", "nonincreasing_concave", or NULL for none. Default is NULL, no contraints at all.#'}
 
 \item{c_sign0}{sign restrictions on the commonly observed regressors: -1 for a minus sign, 1 for a plus sign, 0 otherwise. Default is NULL, i.e. no constraints.}
 
@@ -45,13 +44,11 @@ compute_bnds_betac(
 
 \item{info1}{the results of the point estimates for betac. Default is NULL.}
 
-\item{T_xy}{the apparent sample size the taking into account the difference in the two datasets.}
-
-\item{es}{the numerical bootstrap parameter delta_n.}
-
 \item{constr}{if sign constraints imposed. Default is TRUE.}
 
-\item{var}{if}
+\item{R2bound}{the lower bound on the R2 of the long regression if any. Default is NULL.}
+
+\item{values_sel}{the selected values of Xc for the conditioning. Default is NULL.}
 }
 \value{
 a matrix containing the bounds on the coefficients associated to the common regressor.

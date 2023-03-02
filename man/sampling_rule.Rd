@@ -2,7 +2,7 @@
 % Please edit documentation in R/sampling_rule.R
 \name{sampling_rule}
 \alias{sampling_rule}
-\title{Subsampling rule}
+\title{The subsampling rule}
 \usage{
 sampling_rule(n)
 }
@@ -13,5 +13,5 @@ sampling_rule(n)
 the subsampling size
 }
 \description{
-Subsampling rule
+The subsampling rule
 }

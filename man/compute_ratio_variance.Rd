@@ -4,19 +4,7 @@
 \alias{compute_ratio_variance}
 \title{Function to compute the variance bounds}
 \usage{
-compute_ratio_variance(
-  x,
-  Xp,
-  Yp,
-  dimX2,
-  weights_xp,
-  weights_yp,
-  T_xy,
-  es,
-  boot_par,
-  Opt = "boot",
-  ratio_ref = NULL
-)
+compute_ratio_variance(x, Xp, Yp, dimX2, weights_xp, weights_yp)
 }
 \arguments{
 \item{x}{a matrix containing the directions to compute the variance bounds on the radial function.}
@@ -30,16 +18,6 @@ compute_ratio_variance(
 \item{weights_xp}{the sampling or bootstrap weights for the dataset (Xnc,Xc).}
 
 \item{weights_yp}{the sampling or bootstrap weights for the dataset (Y,Xc).}
-
-\item{T_xy}{the apparent sample size taking into account the difference in the two datasets.}
-
-\item{es}{the numerical bootstrap parameter delta_n.}
-
-\item{boot_par}{the numerical bootstrap parameter. Default is 0.3 without Xc, 0.35 with Xc.}
-
-\item{Opt}{the option of the method to compute the critical values, either "boot" (numerical bootstrap) or "subsampling". Default is numerical bootstrap.}
-
-\item{ratio_ref}{the variances ratio of the point estimate for the computation of the numerical bootstrap replications. Default is NULL.}
 }
 \value{
 the value of the ratio of the variance entering the variance bounds.

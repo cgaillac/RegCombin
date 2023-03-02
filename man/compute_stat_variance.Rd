@@ -16,17 +16,13 @@ compute_stat_variance(
   dimX2,
   nb_pts,
   sam0,
-  kp,
-  Opt = "boot",
   lim = 1,
   weights_x = NULL,
   weights_y = NULL,
-  boot_par = 0.35,
+  constraint = NULL,
   c_sign = NULL,
   nc_sign = NULL,
-  ratio_ref = NULL,
-  Dmat_Yk_ref = NULL,
-  Dmat_Xk_ref = NULL
+  values_sel = NULL
 )
 }
 \arguments{
@@ -52,27 +48,19 @@ compute_stat_variance(
 
 \item{sam0}{the directions q to compute the variance bounds on the radial function.}
 
-\item{kp}{If data_k =NULL, then epsilon is taken equal to kp.}
-
-\item{Opt}{the option of the method to compute the critical values, either "boot" (numerical bootstrap) or "subsampling". Default is numerical bootstrap.}
-
 \item{lim}{the limit number of observations under which we do no compute the conditional variance.}
 
 \item{weights_x}{the sampling weights for the dataset (Xnc,Xc).}
 
 \item{weights_y}{the sampling weights for the dataset (Y,Xc).}
 
-\item{boot_par}{the numerical bootstrap parameter. Default is 0.3 without Xc, 0.35 with Xc.}
+\item{constraint}{a vector indicating the different constraints in a vector of the size of X_c indicating the type of constraints, if any on f(X_c) : "concave", "concave", "nondecreasing", "nonincreasing", "nondecreasing_convex", "nondecreasing_concave",  "nonincreasing_convex", "nonincreasing_concave", or NULL for none. Default is NULL, no contraints at all.}
 
 \item{c_sign}{sign restrictions on the commonly observed regressors: -1 for a minus sign, 1 for a plus sign, 0 otherwise. Default is NULL, i.e. no constraints.}
 
 \item{nc_sign}{sign restrictions on the non-commonly observed regressors Xnc: -1 for a minus sign, 1 for a plus sign, 0 otherwise. Default is NULL, i.e. no constraints.}
 
-\item{ratio_ref}{the variances ratio of the point estimate for the computation of the numerical boostrap replications. Default is NULL.}
-
-\item{Dmat_Yk_ref}{the vector of means of Y| Xc on the initial dataset.}
-
-\item{Dmat_Xk_ref}{the vector of means of Xnc| Xc on the initial dataset.}
+\item{values_sel}{the selected values of Xc for the conditioning. Default is NULL.}
 }
 \value{
 a list containing:

@@ -15,22 +15,22 @@ compute_support(
   dimXnc,
   nb_pts,
   sam0,
-  kp0,
-  data_k,
-  Opt = "subsampling",
+  eps_default0,
+  grid,
   lim = 30,
   weights_x = NULL,
   weights_y = NULL,
+  constraint = NULL,
   c_sign = NULL,
   nc_sign = NULL,
   refs0 = NULL,
   type = "both",
   meth = "adapt",
-  trunc = 2,
-  boot_par = 0.45,
   bc = FALSE,
-  winsor = FALSE,
-  version = "first"
+  version = "first",
+  R2bound = NULL,
+  values_sel = NULL,
+  ties = FALSE
 )
 }
 \arguments{
@@ -54,17 +54,17 @@ compute_support(
 
 \item{sam0}{the directions q to compute the variance bounds on the radial function.}
 
-\item{kp0}{the matrix containing the directions q and the selected epsilon(q).}
+\item{eps_default0}{the matrix containing the directions q and the selected epsilon(q).}
 
-\item{data_k}{the number of points for the grid search on epsilon. Default is 30. If NULL, then epsilon is taken fixed equal to kp.}
-
-\item{Opt}{the option of the method to compute the critical values, either "boot" (numerical bootstrap) or "subsampling". Default is numerical bootstrap.}
+\item{grid}{the number of points for the grid search on epsilon. Default is 30. If NULL, then epsilon is taken fixed equal to kp.}
 
 \item{lim}{the limit number of observations under which we do no compute the conditional variance.}
 
 \item{weights_x}{the sampling weights for the dataset (Xnc,Xc).}
 
 \item{weights_y}{the sampling weights for the dataset (Y,Xc).}
+
+\item{constraint}{a vector indicating the different constraints in a vector of the size of X_c indicating the type of constraints, if any on f(X_c) : "concave", "concave", "nondecreasing", "nonincreasing", "nondecreasing_convex", "nondecreasing_concave",  "nonincreasing_convex", "nonincreasing_concave", or NULL for none. Default is NULL, no contraints at all.#' @param nc_sign if sign restrictions on the non-commonly observed regressors Xnc: -1 for a minus sign, 1 for a plus sign, 0 otherwise. Default is NULL, i.e. no constraints.}
 
 \item{c_sign}{sign restrictions on the commonly observed regressors: -1 for a minus sign, 1 for a plus sign, 0 otherwise. Default is NULL, i.e. no constraints.}
 
@@ -76,15 +76,15 @@ compute_support(
 
 \item{meth}{the method for the choice of epsilon, either "adapt", i.e. adapted to the direction or "min" the minimum over the directions. Default is "adapt".}
 
-\item{trunc}{equal to 2, for the definition of epsilon.}
-
-\item{boot_par}{the numerical bootstrap parameter. Default is 0.3 without Xc, 0.35 with Xc.}
-
 \item{bc}{if TRUE compute also the bounds on betac. Default is FALSE.}
 
-\item{winsor}{indicates if winsorisation. Default is FALSE.}
+\item{version}{version of the computation of the ratio, "first" indicates no weights, no ties, same sizes of the two datasets; "second" otherwise. Default is "second".}
 
-\item{version}{version of the computation of the ratio, "first" is a degraded version but fast; "second" is a correct version but slower. Default is "second".}
+\item{R2bound}{the lower bound on the R2 of the long regression if any. Default is NULL.}
+
+\item{values_sel}{the selected values of Xc for the conditioning. Default is NULL.}
+
+\item{ties}{Boolean indicating if there are ties in the dataset. Default is FALSE.}
 }
 \value{
 a matrix containing the considered directions and the computed value of the support function.

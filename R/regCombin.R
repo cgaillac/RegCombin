@@ -1,34 +1,27 @@
 #' Function computing all the different bounds : DGM and/or Variance
 #'
-#' @param Ldata dataset containing (Y,Xc) where Y is the outcome, Xc are potential common regressors.
-#' @param Rdata dataset containing (Xnc,Xc) where Xnc are the non commonly observed regressors, Xc are potential common regressors.
-#' @param out_var label of the outcome variable Y.
-#' @param nc_var label of the non commonly observed regressors Xnc.
-#' @param c_var label of the commonly observed regressors Xc.
-#' @param nc_sign sign restrictions on the non-commonly observed regressors Xnc: -1 for a minus sign, 1 for a plus sign, 0 otherwise. Default is NULL, i.e. no constraints.
-#' @param c_sign sign restrictions on the commonly observed regressors: -1 for a minus sign, 1 for a plus sign, 0 otherwise. Default is NULL, i.e. no constraints.
+#' @param Ldata a dataset including Y and possibly X_c=(X_{c,1},...,X_{c,q}). X_c must be finitely supported.
+#' @param Rdata a dataset including X_{nc} and the same variables X_{c} as in Ldata.
+#' @param out_var the label of the outcome variable Y.
+#' @param nc_var the labels of the regressors X_{nc}.
+#' @param c_var the labels of the regressors X_c (if any).
+#' @param constraint a vector of size q indicating the type of constraints (if any) on the function f(x_{c,1},...,x_{c,q}) for k=1,...,q:  "convex", "concave", "nondecreasing", "nonincreasing", "nondecreasing_convex", "nondecreasing_concave", "nonincreasing_convex", "nonincreasing_concave", or NA for no constraint. Default is NULL, namely no constraints at all.
+#' @param nc_sign a vector of size p indicating sign restrictions on each of the p coefficients of X_{nc}. For each component, -1 corresponds to a minus sign, 1 to a plus sign and 0 to no constraint. Default is NULL, namely no  constraints at all.
+#' @param c_sign same as nc_sign but for X_c (accordingly, it is a vector of size q).
+#' @param weights_x the sampling weights for the dataset Rdata. Default is NULL.
+#' @param weights_y  the sampling weights for the dataset Ldata. Default is NULL.
 #' @param nbCores number of cores for the parallel computation. Default is 1.
 #' @param methods method used for the bounds: "DGM" (Default) and/or "Variance".
-#' @param kp If data_k =NULL, then epsilon is taken equal to kp.
-#' @param nb_pts the constant C in DGM for the epsilon_0, the lower bound on the grid for epsilon, taken equal to nb_pts*ln(n)/n. Default is 1 without regressors Xc, 3 with Xc.
-#' @param Opt the option of the method to compute the critical values, either "boot" (numerical bootstrap) or "subsampling". Default is numerical bootstrap.
-#' @param Bsamp the number of bootstrap/subsampling replications. Default is 1000.
-#' @param data_k the number of points for the grid search on epsilon. Default is 30. If NULL, then epsilon is taken fixed equal to kp.
-#' @param C0 the upper bound on the grid for epsilon. Default is 0.5.
-#' @param list_ex the list of the data that should not be used on the different clusters. This reduces the computational cost. Default is empty list.
-#' @param weights_x the sampling weights for the dataset (Xnc,Xc). Default is NULL.
-#' @param weights_y  the sampling weights for the dataset (Y,Xc). Default is NULL.
-#' @param trunc equal to 2, for the definition of epsilon.
-#' @param boot_par the numerical bootstrap parameter. Default is 0.3 without Xc, 0.35 with Xc.
-#' @param meth the method for the choice of epsilon, either "adapt", i.e. adapted to the direction or "min" the minimum over the directions. Default is "adapt".
-#' @param modeNA indicates if NA introduced if the interval is empty. Default is FALSE.
-#' @param winsor indicates if winsorisation. Default is FALSE.
-#' @param version version of the computation of the ratio, "first" is a degraded version but fast; "second" is a correct version but slower. Default is "second".
-#' @param projections if FALSE compute the identified set along some directions or the confidence regions. Default is FALSE
+#' @param grid the number of points for the grid search on epsilon. If NULL, then grid search is not performed and epsilon is taken as eps_default. Default is 10.
+#' @param alpha one minus the nominal coverage of the confidence intervals. Default is 0.05.
+#' @param eps_default a pre-specified value of epsilon used only if the grid search for selecting the value of epsilon is not performed, i.e, when grid is NULL. Default is 0.5.
+#' @param R2bound the lower bound on the R2 of the long regression if any. Default is NULL.
+#' @param projections a boolean indicating if the identified set and confidence intervals on beta_{0k} for k=1,...,p are computed (TRUE), rather than the identified set and confidence region of beta_0 (FALSE). Default is FALSE.
+#' @param unchanged a boolean indicating if the categories based on X_c must be kept unchanged (TRUE). Otherwise (FALSE), a thresholding approach is taken imposing that each value appears more than 10 times in both datasets and represents more than 0.01 per cent of the pooled dataset (of size n_X+n_Y). Default is FALSE.
+#' @param ties a boolean indicating if there are ties in the dataset. If not (FALSE), computation is faster. Default is FALSE.
 #'
-#' @return a list containing, in order:
-#'
-#'  - DGM_complete or Variance_complete : the complete outputs of the functions DGM_bounds or Variance_bounds.
+#' @return  Use summary_regCombin for a user-friendly print of the estimates. Returns a list containing, in order:
+#' - DGM_complete or Variance_complete : the complete outputs of the functions DGM_bounds or Variance_bounds.
 #'
 #'  and additional pre-treated outputs, replace below "method" by either "DGM" or "Variance":
 #'
@@ -54,20 +47,99 @@
 #'
 #' @examples
 #'
+#' ### Simulating according to this DGP
+#' n=200
+#' Xnc_x = rnorm(n,0,1.5)
+#' Xnc_y = rnorm(n,0,1.5)
+#' epsilon = rnorm(n,0,1)
+#'
+#' ## true value
+#' beta0 =1
+#' Y = Xnc_y*beta0 + epsilon
+#' out_var = "Y"
+#' nc_var = "Xnc"
+#'
+#' # create the datasets
+#' Ldata<- as.data.frame(Y)
+#' colnames(Ldata) <- c(out_var)
+#' Rdata <- as.data.frame(Xnc_x)
+#' colnames(Rdata) <- c(nc_var)
+#'
+#'
+#' ############# Estimation #############
+#' output <- regCombin(Ldata,Rdata,out_var,nc_var)
+
+
+#'
+#'
+#'
 regCombin <- function(Ldata, Rdata,
                       out_var, nc_var, c_var =NULL,
+                      constraint = NULL,
                       nc_sign = NULL, c_sign = NULL,
+                      weights_x = NULL,weights_y = NULL,
                       nbCores=1,
                       methods=c("DGM"),
-                      kp=0.5, nb_pts=1, Opt="boot",Bsamp=1000,data_k=30,C0=0.5,
-                      list_ex=c(),
-                      weights_x = NULL,weights_y = NULL, trunc=2,boot_par=0.3, meth="adapt",
-                      modeNA=FALSE,  winsor= FALSE, version = "second",  projections= FALSE){
+                      grid = 10,
+                      alpha=0.05,
+                      eps_default = 0.5,
+                      R2bound=NULL,
+                      projections= FALSE,
+                      unchanged=FALSE,
+                      ties = FALSE){
 
+
+  ## if no weights, same data sizes, and no ties, faster estimation.
+  if(is.null(weights_x) && is.null(weights_y) && (dim(Ldata)[1]==dim(Rdata)[2]) &&  (ties == FALSE) ){
+    version= "first"
+  }else{
+    version= "second"
+  }
+  version_sel = version
+
+
+  ## parameter for handling the Xc (either convert to one or keep )
+  hold_specif_Xc = TRUE
   set = FALSE
   #### get sizes
   dimXc = length(c_var)
+  dimXc_old= dimXc
   dimXnc = length(nc_var)
+  # modeNA indicates if NA introduced if the interval is empty.
+  modeNA=FALSE
+  # if winsorisation
+  meth = "adapt"
+  winsor= FALSE
+  trunc=2
+  C0= 0.5
+  C=1
+
+
+  #### number of subsampling replications ###############
+  if(dimXnc >1){
+    Bsamp=200
+  }else{
+    if(!is.null(R2bound)){
+      if(R2bound >1){
+        Bsamp=1000
+      }
+    }else{
+      Bsamp=1000
+    }
+  }
+
+  ### save weigths
+  weights_xs =  weights_x
+  weights_ys =  weights_y
+  output <- vector("list")
+
+  idx_output = 1
+  names_output = NULL
+
+  ############ handling the Xc  #######################################################
+  ####### reformating them if needded #################################################
+
+  values_sel = NULL
   ####
   projections0 = projections
   if(dimXc!=0){
@@ -84,36 +156,150 @@ regCombin <- function(Ldata, Rdata,
       refs0 = (1:length(values))[values>0]
     }
 
+    ####### if Xc
+    # select pooled observations
+    if(dimXc==1){
+      Xc_pool <- c(Rdata[,c_var],Ldata[,c_var])
+    }else{
+      Xc_pool <- rbind(Rdata[,c_var],Ldata[,c_var])
+    }
+    ### preliminary screening on Xc ###
+
+    ## tabulate values of initial Xc
+    values_tab = matrix(0,dim(values)[1],3)
+    for(k in 1:dim(values)[1]){
+      values_tab[k,1] <- tabulate_values(k,values,Rdata[,c_var],dimXc)
+      values_tab[k,2] <- tabulate_values(k,values,Ldata[,c_var],dimXc)
+      values_tab[k,3] <- tabulate_values(k,values,Xc_pool,dimXc)
+    }
+
+    ## select values according to threshold and create new Xc
+    select_values=NULL
+    unselect_values=NULL
+
+    # tomod_values=NULL
+    if(unchanged==TRUE){
+      select_values = 1:dim(values)[1]
+      unselect_values = NULL
+    }else{
+      for(j in 1:dim(values)[1]){
+        ### condition selection of Xc values ###
+        if(  values_tab[j,1]>=10 &  values_tab[j,2]>=10 &   values_tab[j,3]>=(0.01/100*(dim(Rdata)[1] + dim(Ldata)[1]))){
+          select_values = c(select_values, j)
+        }else{
+          unselect_values = c(unselect_values, j)
+        }
+      }
+    }
+
+    values_sel = vector("list")
+    values_sel[["selected"]] <- values[select_values,]
+    values_sel[["old"]] <- values
+
+    c_sign_old= c_sign
+    c_sign = c_sign[(select_values-1)[-c(1)]]
+
+    ### V1: redefine first class as {1, select_values}
+    Xc_x = matrix(0,dim(Ldata)[1],1)
+    Xc_y = matrix(0,dim(Rdata)[1],1)
+    ind=1
+    for(j in select_values[-c(1)]){
+      if(dimXc==1){
+        val = values[j,]
+        sel_x = (Ldata[,c_var]==val)
+        sel_y = (Rdata[,c_var]==val)
+      }else{
+        val = t(as.matrix(values[j,]))
+        sel_x = matrix(1,dim(Ldata)[1],1)
+        sel_y = matrix(1,dim(Rdata)[1],1)
+        for(ddd in 1:dimXc){
+          sel_x =  sel_x & (Ldata[,ddd]==val[ddd])
+          sel_y =  sel_y & (Rdata[,ddd]==val[ddd])
+        }
+        sel_x = matrix( sel_x,dim(Ldata)[1],1)
+        sel_y = matrix( sel_y,dim(Rdata)[1],1)
+      }
+      Xc_x[sel_x]=ind
+      Xc_y[sel_y]=ind
+      ind= ind+1
+    }
+
+    table(Xc_y)
+    colnames(Xc_y) <- "Xc"
+    colnames(Xc_x) <- "Xc"
+    Rdata0 <- Rdata
+    Ldata0 <- Ldata
+    Rdata <- as.data.frame(cbind(Rdata[,nc_var],   Xc_y))
+    colnames(Rdata) <- c(nc_var,"Xc")
+    Ldata <- as.data.frame(cbind(Ldata[,out_var],   Xc_x))
+    colnames(Ldata) <- c(out_var,"Xc")
+    dimXc_old = dimXc
+    c_var_old = c_var
+    values_old = values
+    # c_sign_old = c_sign
+
+    ##################################################################################
+    ##################################################################################
+
+
+    ################# handling the sign, after modifications #########################
+
+    dimXc=1
+    c_var = "Xc"
+    ####
+    groups=1
+    values = matrix(create_values(dimXc,c_var,Rdata))
+    refs0 = (1:length(values))[values>0]
+
+    if( length(c_sign) < (length(values)-1)){
+      c_sign = rep(0,(length(values)-1) )
+    }
+
+    # values_old[select_values,]
+    # values_old[unselect_values,]
   }else{
     values = NULL
     s= NULL
     refs0 = NULL
   }
 
-  weights_xs =  weights_x
-  weights_ys =  weights_y
-  output <- vector("list")
-  idx_output = 1
-  names_output = NULL
+
+  if(dimXc==0){
+    if(dimXnc>1){
+      nb_pts=0.5
+    }else{
+      nb_pts=1
+    }
+  }else{
+    if(dimXnc>1){
+      nb_pts=0.5
+    }else{
+      nb_pts=1
+    }
+  }
+
+  #### iterate over the possibly selected methods ##############################
 
   for(  method in methods ){
     if( method=="DGM"){
 
       sam0 <- eye(dimXnc)
       sam0 <- rbind(-sam0,sam0)
-      # if(dimXnc==1){projections0=FALSE}else{projections0=TRUE}
       eps0 = 0
 
 
-      out <- DGM_bounds(Ldata, Rdata, values,sam0,refs0,
-                        out_var,  nc_var, c_var,
+      out <- DGM_bounds(Ldata, Rdata, values,
+                        sam0,refs0,
+                        out_var,  nc_var, c_var, constraint,
                         nc_sign, c_sign,
                         nbCores=nbCores,
-                        kp,nb_pts, Opt,Bsamp=Bsamp,data_k,C0,
-                        list_ex=list_ex,
-                        weights_x =weights_x,weights_y =weights_y,outside=FALSE,trunc= trunc,boot_par=boot_par, meth=meth,
-                        modeNA =modeNA, winsor = winsor, version =version , projections=projections)
-
+                        eps_default= eps_default, nb_pts= nb_pts,Bsamp=Bsamp,grid =grid,
+                        #list_ex=list_ex,
+                        weights_x =weights_x,weights_y =weights_y,outside=FALSE,  meth=meth,
+                        modeNA =modeNA, version =version,
+                        version_sel =  version_sel,
+                        alpha = alpha , projections=projections, R2bound ,values_sel=  values_sel,
+                        ties =  ties)
 
       output[[paste0(method,"_complete")]] <-  out
 
@@ -131,28 +317,73 @@ regCombin <- function(Ldata, Rdata,
         hull0_low <-  mt_sharpCI_proj_sign_low
 
 
+        ####" handling the aggregate values if any Xc ################
+        if(!is.null(values)){
+          mt_sharpCI_proj_sign_agg <- out$ci$upper_agg
+          mt_sharpCI_proj_sign_low_agg <- out$ci$lower_agg
+          mt_sharpCI_proj_agg  <-  out$ci$unconstr_agg
+
+          mt_sharp0_proj_sign_agg  <- out$point$upper_agg
+          mt_sharp0_proj_sign_low_agg  <- out$point$lower_agg
+          mt_sharp0_proj_agg  <- out$point$unconstr_agg
+
+          hull0_agg <-  mt_sharpCI_proj_sign_agg
+          hull0_low_agg <-  mt_sharpCI_proj_sign_low_agg
+        }
+
+
         out00 = matrix(0,dimXnc,2)
 
         for(id0 in 1:dimXnc){
-          out00[id0,1] =-1* mt_sharpCI_proj_sign[id0]*(mt_sharpCI_proj_sign_low[dimXnc+id0]==0) +
-            (mt_sharpCI_proj_sign_low[dimXnc+id0]!=0)*mt_sharpCI_proj_sign_low[dimXnc+id0]
-          out00[id0,2] = (1* mt_sharpCI_proj_sign[dimXnc+id0] )*(mt_sharpCI_proj_sign_low[id0]==0) -
-            (mt_sharpCI_proj_sign_low[id0]!=0)*mt_sharpCI_proj_sign_low[id0]
+
+          out00[id0,1] = -mt_sharpCI_proj_sign_low[id0+1]
+          out00[id0,2] = mt_sharpCI_proj_sign[id0+1]
+
+
         }
         output[[paste0(method,"CI_sign")]] <- out00
 
-
-
         for(id0 in 1:dimXnc){
-          out00[id0,1] = -1* mt_sharp0_proj_sign[id0]*(mt_sharp0_proj_sign_low[dimXnc+id0]==0) +
-            (mt_sharp0_proj_sign_low[dimXnc+id0]!=0)*mt_sharp0_proj_sign_low[dimXnc+id0]
-          out00[id0,2] = 1*mt_sharp0_proj_sign[dimXnc+id0]*(mt_sharp0_proj_sign_low[id0]==0) -
-            (mt_sharp0_proj_sign_low[id0]!=0)*mt_sharp0_proj_sign_low[id0]
+
+          out00[id0,1] = -mt_sharp0_proj_sign_low[id0+1]
+          out00[id0,2] = mt_sharp0_proj_sign[id0+1]
+
+
+
         }
         output[[paste0(method,"pt_sign")]] <- out00
 
-     }else{
-       ### dimXnc >1
+
+        ##################### aggregated values ####################################
+        if(!is.null(values)){
+
+          out00_agg = matrix(0,dimXnc,2)
+
+          for(id0 in 1:dimXnc){
+
+            out00_agg[id0,1] = -mt_sharpCI_proj_sign_low_agg[id0+1]
+            out00_agg[id0,2] = mt_sharpCI_proj_sign_agg[id0+1]
+
+
+          }
+          output[[paste0(method,"CI_sign_agg")]] <- out00_agg
+
+          for(id0 in 1:dimXnc){
+
+            out00_agg[id0,1] = -mt_sharp0_proj_sign_low_agg[id0+1]
+            out00_agg[id0,2] = mt_sharp0_proj_sign_agg[id0+1]
+
+
+
+          }
+          output[[paste0(method,"pt_sign_agg")]] <- out00_agg
+
+
+
+        }
+
+      }else{
+        ### dimXnc >1
 
 
         if(projections==TRUE){
@@ -163,7 +394,7 @@ regCombin <- function(Ldata, Rdata,
 
           v0 = NULL
           for(d in 1:dimXnc){
-          v0 <- c(v0,paste0("q_",d))
+            v0 <- c(v0,paste0("q_",d))
           }
           out_ci <-  out$ci$support
           colnames(out_ci) <- c(v0,"Support")
@@ -192,8 +423,18 @@ regCombin <- function(Ldata, Rdata,
 
           output[[paste0(method,"CI_all_sign")]] <-  mt_sharpCI_sign
           output[[paste0(method,"pt_all_sign")]] <-  mt_sharp0_sign
-          mt_sharpCI_proj <- out$ci$unconstr
-          mt_sharp0_proj  <- out$point$unconstr
+          # output[[paste0(method,"CI")]] <-  mt_sharpCI_sign
+          # output[[paste0(method,"pt")]] <-  mt_sharp0_sign
+
+          if(!is.null(nc_sign) | !is.null(c_sign)){
+            mt_sharpCI_proj <- out$ci$unconstr
+            mt_sharp0_proj  <- out$point$unconstr
+          }else{
+            mt_sharpCI_proj <- out$ci$upper
+            mt_sharp0_proj  <- out$point$upper
+          }
+
+
         }
 
       }
@@ -228,28 +469,55 @@ regCombin <- function(Ldata, Rdata,
 
       if(dimXnc==1){projections0=FALSE}else{projections0=TRUE}
 
-
       out <- Variance_bounds(Ldata,Rdata,
-                             out_var, c_var, nc_var,
-                             c_sign, nc_sign,
+                             out_var, c_var, nc_var, constraint,
+                             c_sign, nc_sign, projections=projections0,
                              values,sam0, refs0,
-                             nb_pts,kp, Opt="boot",nbCores,Bsamp=1000,
-                             list_ex=list_ex,weights_x =weights_x,weights_y =weights_y, projections=projections0)
+                             nb_pts,eps_default,nbCores,Bsamp=1000,
+                             weights_x =weights_x,weights_y =weights_y,
+                             values_sel=  values_sel)
 
       output[[paste0(method,"_complete")]] <-  out
       mt_sharpCI_proj_sign <- out$ci$upper
+      mt_sharpCI_proj_sign_low <- out$ci$lower
       mt_sharp0_proj_sign  <- out$point$upper
+      mt_sharp0_proj_sign_low <- out$point$lower
+
       mt_sharpCI_proj <- out$ci$unconstr
       mt_sharp0_proj  <- out$point$unconstr
 
+      # out00 = matrix(0,dimXnc,2)
+      # output[[paste0(method,"CI_sign")]] <- mt_sharpCI_proj_sign
+      # output[[paste0(method,"pt_sign")]] <-   mt_sharp0_proj_sign
+
       out00 = matrix(0,dimXnc,2)
-      output[[paste0(method,"CI_all_sign")]] <- mt_sharpCI_proj_sign
-      output[[paste0(method,"pt_all_sign")]] <-   mt_sharp0_proj_sign
+
+      for(id0 in 1:dimXnc){
+
+        out00[id0,1] = -mt_sharpCI_proj_sign_low[id0+1]
+        out00[id0,2] = mt_sharpCI_proj_sign[id0+1]
+
+
+      }
+      output[[paste0(method,"CI_sign")]] <- out00
+
+      for(id0 in 1:dimXnc){
+
+        out00[id0,1] = -mt_sharp0_proj_sign_low[id0+1]
+        out00[id0,2] = mt_sharp0_proj_sign[id0+1]
+
+
+
+      }
+      output[[paste0(method,"pt_sign")]] <- out00
+
     }
 
 
     #### 1) bounds on beta_nc without any sign constraints
     if(projections==FALSE | dimXnc==1){
+
+
 
       out00 = matrix(0,dimXnc,2)
 
@@ -275,18 +543,34 @@ regCombin <- function(Ldata, Rdata,
     }
 
 
+    if(!is.null(values) & method!="Variance"){
 
-    ######################### bounds on betac
-    # # if(dimXnc==1){
-    # hull0 <- mt_sharpCI_proj
-    # hull00 <- mt_sharp0_proj
-    # # }else{
-    # #   hull0 <- hull_CI
-    # #   hull00 <- hull_pt
-    # # }
-    # sam0 <- eye(dimXnc)
-    # sam0 <- rbind(-sam0,sam0)
 
+      out00_agg = matrix(0,dimXnc,2)
+
+      for(id0 in 1:dimXnc){
+        if(method!="HP"){
+          out00_agg[id0,1] = -mt_sharpCI_proj_agg[id0]
+        }else{
+          out00_agg[id0,1] = mt_sharpCI_proj_agg[id0]
+        }
+        out00_agg[id0,2] = mt_sharpCI_proj_agg[dimXnc+id0]
+      }
+      output[[paste0(method,"CI_agg")]] <- out00_agg
+
+      for(id0 in 1:dimXnc){
+        if(method!="HP"){
+          out00_agg[id0,1] = - mt_sharp0_proj_agg[id0]
+        }else{
+          out00_agg[id0,1] = mt_sharp0_proj_agg[id0]
+        }
+        out00_agg[id0,2] = mt_sharp0_proj_agg[dimXnc+id0]
+      }
+      output[[paste0(method,"pt_agg")]] <- out00_agg
+
+    }
+
+    ######################### bounds on betac, the coef of Xc ############################"
 
     if(dimXc>0 & dimXnc==1){
 
@@ -313,6 +597,44 @@ regCombin <- function(Ldata, Rdata,
     output[[paste0(method,"beta1_pt")]] <- beta1K0
   }
 
+
+  ###############################################################################
+
+
+  output[["n_y"]] <- dim(Ldata)[1]
+  output[["n_x"]] <- dim(Rdata)[1]
+  output[["out_var"]] <- out_var
+  output[["nc_var"]] <- nc_var
+  output[["c_var"]] <- c_var
+  output[["constraint"]] <- constraint
+  output[["nc_sign"]] <- nc_sign
+  output[["c_sign"]] <- c_sign
+  output[["method"]] <- methods
+  # output[["Opt"]] <- Opt
+  output[["alpha"]] <- alpha
+  output[["sam0"]] <- sam0
+  output[["Bsamp"]] <- Bsamp
+
+  if(is.null(R2bound)){
+    output[["R2bound"]] <- NA
+  }else{
+    output[["R2bound"]] <- R2bound
+  }
+
+  if(dimXc_old>=1){
+    output[["select_values"]] <-select_values
+    output[["unselect_values"]] <-unselect_values
+    output[["values"]] <-values
+    output[["values_old"]] <-values_old
+  }
+  if(dimXc_old>1){
+    output[["dimXc_old"]] <-dimXc_old
+    output[["c_var_old"]] <-c_var_old
+  }
+
   return(output)
+
+
+
 
 }

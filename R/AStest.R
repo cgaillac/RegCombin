@@ -8,9 +8,7 @@
 #' @return
 #' the result of the test at level 5%
 #'
-#' @export
-#'
-#' @examples
+
 AStest<- function(lamb,YY,XX,tuningParam=NULL){
   y_tilde <- rbind(matrix(YY,length(YY),1),matrix(lamb*(XX),length(XX),1)) ## concatenation of y then psi
   D <- rbind(matrix(1,length(YY),1),matrix(0,length(XX),1)) ## vector of D's

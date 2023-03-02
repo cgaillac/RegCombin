@@ -1,17 +1,18 @@
 Package: RegCombin
-Type: Package
-Title: Linear regression under Data Combination
-Version: 0.1.1
-Author: person("Xavier", "D'Haultfoeuille", email = "xavier.dhaultfoeuille@ensae.fr", role = c("aut")),
-    person("Christophe", "Gaillac", email = "christophe.gaillac@ensae.fr", role = c("aut", "cre"))), 
-    c(person("Arnaud", "Maurel", email = "arnaud.maurel@duke.edu", role = c("aut"))
-Maintainer: The package maintainer <christophe.gaillac@economics.ox.ac.uk>
-Description: We implement linear regression when the outcome of interest and some of the covariates are observed in two different datasets that cannot be linked, based on D'Haultfoeuille, Gaillac, and Maurel (2022). The package allows for common regressors observed in both datasets, and for sign constraints on the effect of covariates on the outcome of interest.
+Title: Partially Linear Regression under Data Combination
+Version: 0.2.1
+Authors@R: c(person("Xavier", "D'Haultfoeuille", email = "xavier.dhaultfoeuille@ensae.fr", role = c("aut")),
+    person("Christophe", "Gaillac", email = "christophe.gaillac@economics.ox.ac.uk", role = c("aut", "cre")), 
+    person("Arnaud", "Maurel", email = "arnaud.maurel@duke.edu", role = c("aut")))
+Description: We implement linear regression when the outcome of interest and some of the covariates are observed in two different datasets that cannot be linked, based on D'Haultfoeuille, Gaillac, Maurel (2022) <doi:10.3386/w29953>. The package allows for common regressors observed in both datasets, and for various shape constraints on the effect of covariates on the outcome of interest. It also provides the tools to perform a test of point identification. See the associated vignette <https://github.com/cgaillac/RegCombin/blob/master/RegCombin_vignette.pdf> for theory and code examples.
 License: GPL-3
 Encoding: UTF-8
 Suggests: knitr, rmarkdown
-VignetteBuilder: knitr
-RoxygenNote: 7.1.1
-Imports: R.matlab,geometry,pracma,sfsmisc,snowfall,RationalExp,Hmisc
+RoxygenNote: 7.2.3
+Imports: dplyr,kableExtra,snowfall,RationalExp,Hmisc,geometry,pracma
 NeedsCompilation: no
-Packaged: 2022-04-04 14:40:59 UTC; chris
+Packaged: 2023-03-01 11:01:07 UTC; chris
+Author: Xavier D'Haultfoeuille [aut],
+  Christophe Gaillac [aut, cre],
+  Arnaud Maurel [aut]
+Maintainer: Christophe Gaillac <christophe.gaillac@economics.ox.ac.uk>

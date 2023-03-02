@@ -1,13 +1,10 @@
-#' Subsampling rule
+#' The subsampling rule
 #'
 #' @param n sample size.
 #'
 #' @return
 #' the subsampling size
 #'
-#' @export
-#'
-#' @examples
-sampling_rule <- function(n){return(0.25*n - 0.05*max(n-800,0)  -
-                                      0.05*max(n-1200,0) - 0.05*max(n-1800,0)  -
-                                      0.05*max(n-2000,0) - 0.05*(1-log(2400)/log(n))*max(n-2400,0) )} ## en cours
+sampling_rule <- function(n){
+        res =   0.75*(0.5*n - 0.3*max(n-5,0) - 0.15*max(n-1000,0) - 0.05*(1-log(3000)/log(n))*max(n-3000,0))
+  return(res)}

@@ -12,9 +12,6 @@
 #'  -  value of the objective function
 #'  -  the number of iterations
 #'
-#' @export
-#'
-#' @examples
 
 AS_bounds <- function( start, Yp ,Xb  , N_max = 30, tol = 10^(-4),tuningParam=NULL){
 

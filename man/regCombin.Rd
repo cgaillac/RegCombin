@@ -10,83 +10,64 @@ regCombin(
   out_var,
   nc_var,
   c_var = NULL,
+  constraint = NULL,
   nc_sign = NULL,
   c_sign = NULL,
-  nbCores = 1,
-  methods = c("DGM"),
-  kp = 0.5,
-  nb_pts = 1,
-  Opt = "boot",
-  Bsamp = 1000,
-  data_k = 30,
-  C0 = 0.5,
-  list_ex = c(),
   weights_x = NULL,
   weights_y = NULL,
-  trunc = 2,
-  boot_par = 0.3,
-  meth = "adapt",
-  modeNA = FALSE,
-  winsor = FALSE,
-  version = "second",
-  projections = FALSE
+  nbCores = 1,
+  methods = c("DGM"),
+  grid = 10,
+  alpha = 0.05,
+  eps_default = 0.5,
+  R2bound = NULL,
+  projections = FALSE,
+  unchanged = FALSE,
+  ties = FALSE
 )
 }
 \arguments{
-\item{Ldata}{dataset containing (Y,Xc) where Y is the outcome, Xc are potential common regressors.}
+\item{Ldata}{a dataset including Y and possibly X_c=(X_{c,1},...,X_{c,q}). X_c must be finitely supported.}
 
-\item{Rdata}{dataset containing (Xnc,Xc) where Xnc are the non commonly observed regressors, Xc are potential common regressors.}
+\item{Rdata}{a dataset including X_{nc} and the same variables X_{c} as in Ldata.}
 
-\item{out_var}{label of the outcome variable Y.}
+\item{out_var}{the label of the outcome variable Y.}
 
-\item{nc_var}{label of the non commonly observed regressors Xnc.}
+\item{nc_var}{the labels of the regressors X_{nc}.}
 
-\item{c_var}{label of the commonly observed regressors Xc.}
+\item{c_var}{the labels of the regressors X_c (if any).}
 
-\item{nc_sign}{sign restrictions on the non-commonly observed regressors Xnc: -1 for a minus sign, 1 for a plus sign, 0 otherwise. Default is NULL, i.e. no constraints.}
+\item{constraint}{a vector of size q indicating the type of constraints (if any) on the function f(x_{c,1},...,x_{c,q}) for k=1,...,q:  "convex", "concave", "nondecreasing", "nonincreasing", "nondecreasing_convex", "nondecreasing_concave", "nonincreasing_convex", "nonincreasing_concave", or NA for no constraint. Default is NULL, namely no constraints at all.}
 
-\item{c_sign}{sign restrictions on the commonly observed regressors: -1 for a minus sign, 1 for a plus sign, 0 otherwise. Default is NULL, i.e. no constraints.}
+\item{nc_sign}{a vector of size p indicating sign restrictions on each of the p coefficients of X_{nc}. For each component, -1 corresponds to a minus sign, 1 to a plus sign and 0 to no constraint. Default is NULL, namely no  constraints at all.}
+
+\item{c_sign}{same as nc_sign but for X_c (accordingly, it is a vector of size q).}
+
+\item{weights_x}{the sampling weights for the dataset Rdata. Default is NULL.}
+
+\item{weights_y}{the sampling weights for the dataset Ldata. Default is NULL.}
 
 \item{nbCores}{number of cores for the parallel computation. Default is 1.}
 
 \item{methods}{method used for the bounds: "DGM" (Default) and/or "Variance".}
 
-\item{kp}{If data_k =NULL, then epsilon is taken equal to kp.}
+\item{grid}{the number of points for the grid search on epsilon. If NULL, then grid search is not performed and epsilon is taken as eps_default. Default is 10.}
 
-\item{nb_pts}{the constant C in DGM for the epsilon_0, the lower bound on the grid for epsilon, taken equal to nb_pts*ln(n)/n. Default is 1 without regressors Xc, 3 with Xc.}
+\item{alpha}{one minus the nominal coverage of the confidence intervals. Default is 0.05.}
 
-\item{Opt}{the option of the method to compute the critical values, either "boot" (numerical bootstrap) or "subsampling". Default is numerical bootstrap.}
+\item{eps_default}{a pre-specified value of epsilon used only if the grid search for selecting the value of epsilon is not performed, i.e, when grid is NULL. Default is 0.5.}
 
-\item{Bsamp}{the number of bootstrap/subsampling replications. Default is 1000.}
+\item{R2bound}{the lower bound on the R2 of the long regression if any. Default is NULL.}
 
-\item{data_k}{the number of points for the grid search on epsilon. Default is 30. If NULL, then epsilon is taken fixed equal to kp.}
+\item{projections}{a boolean indicating if the identified set and confidence intervals on beta_{0k} for k=1,...,p are computed (TRUE), rather than the identified set and confidence region of beta_0 (FALSE). Default is FALSE.}
 
-\item{C0}{the upper bound on the grid for epsilon. Default is 0.5.}
+\item{unchanged}{a boolean indicating if the categories based on X_c must be kept unchanged (TRUE). Otherwise (FALSE), a thresholding approach is taken imposing that each value appears more than 10 times in both datasets and represents more than 0.01 per cent of the pooled dataset (of size n_X+n_Y). Default is FALSE.}
 
-\item{list_ex}{the list of the data that should not be used on the different clusters. This reduces the computational cost. Default is empty list.}
-
-\item{weights_x}{the sampling weights for the dataset (Xnc,Xc). Default is NULL.}
-
-\item{weights_y}{the sampling weights for the dataset (Y,Xc). Default is NULL.}
-
-\item{trunc}{equal to 2, for the definition of epsilon.}
-
-\item{boot_par}{the numerical bootstrap parameter. Default is 0.3 without Xc, 0.35 with Xc.}
-
-\item{meth}{the method for the choice of epsilon, either "adapt", i.e. adapted to the direction or "min" the minimum over the directions. Default is "adapt".}
-
-\item{modeNA}{indicates if NA introduced if the interval is empty. Default is FALSE.}
-
-\item{winsor}{indicates if winsorisation. Default is FALSE.}
-
-\item{version}{version of the computation of the ratio, "first" is a degraded version but fast; "second" is a correct version but slower. Default is "second".}
-
-\item{projections}{if FALSE compute the identified set along some directions or the confidence regions. Default is FALSE}
+\item{ties}{a boolean indicating if there are ties in the dataset. If not (FALSE), computation is faster. Default is FALSE.}
 }
 \value{
-a list containing, in order:
-
- - DGM_complete or Variance_complete : the complete outputs of the functions DGM_bounds or Variance_bounds.
+Use summary_regCombin for a user-friendly print of the estimates. Returns a list containing, in order:
+- DGM_complete or Variance_complete : the complete outputs of the functions DGM_bounds or Variance_bounds.
 
  and additional pre-treated outputs, replace below "method" by either "DGM" or "Variance":
 
@@ -112,5 +93,29 @@ a list containing, in order:
 Function computing all the different bounds : DGM and/or Variance
 }
 \examples{
+
+### Simulating according to this DGP
+n=200
+Xnc_x = rnorm(n,0,1.5)
+Xnc_y = rnorm(n,0,1.5)
+epsilon = rnorm(n,0,1)
+
+## true value
+beta0 =1
+Y = Xnc_y*beta0 + epsilon
+out_var = "Y"
+nc_var = "Xnc"
+
+# create the datasets
+Ldata<- as.data.frame(Y)
+colnames(Ldata) <- c(out_var)
+Rdata <- as.data.frame(Xnc_x)
+colnames(Rdata) <- c(nc_var)
+
+
+############# Estimation #############
+output <- regCombin(Ldata,Rdata,out_var,nc_var)
+
+
 
 }

@@ -7,9 +7,6 @@
 #' @return
 #' a matrix of the values of the support points for the common regressors Xc
 #'
-#' @export
-#'
-#' @examples
 create_values <- function(dimX,c_var,Rdata){
   ### to do, modify to include the possibility of HD factor variables.
   res = vector("list")

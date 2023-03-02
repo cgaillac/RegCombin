@@ -8,27 +8,26 @@ objective_support(
   x,
   dir_nb,
   sam0,
-  kp1,
+  eps1,
   Xc_xb,
   Xncb,
   Xc_yb,
   Yb,
   values,
-  data_k,
-  Opt = "boot",
+  grid,
   weights_x,
   weights_y,
+  constraint,
   c_sign,
   nc_sign,
   refs0,
   meth = "adapt",
-  boot_par,
   T_xy,
   bc = FALSE,
-  winsor = FALSE,
   version = "first",
-  weights_x_ref = NULL,
-  weights_y_ref = NULL
+  R2bound = NULL,
+  values_sel = NULL,
+  ties = FALSE
 )
 }
 \arguments{
@@ -38,7 +37,7 @@ objective_support(
 
 \item{sam0}{the set of directions e where to compute the support function}
 
-\item{kp1}{the matrix of directions q, along the canonical axis, and the selected epsilon(q)}
+\item{eps1}{the matrix of directions q, along the canonical axis, and the selected epsilon(q)}
 
 \item{Xc_xb}{the possibly bootstraped/subsampled common regressor on the dataset  (Xnc,Xc). Default is NULL.}
 
@@ -50,13 +49,13 @@ objective_support(
 
 \item{values}{the different unique points of support of the common regressor Xc.}
 
-\item{data_k}{the number of points for the grid search on epsilon. Default is 30. If NULL, then epsilon is taken fixed equal to kp.}
-
-\item{Opt}{the option of the method to compute the critical values, either "boot" (numerical bootstrap) or "subsampling". Default is numerical bootstrap.}
+\item{grid}{the number of points for the grid search on epsilon. Default is 30. If NULL, then epsilon is taken fixed equal to kp.}
 
 \item{weights_x}{the bootstrap or sampling weights for the dataset (Xnc,Xc).}
 
 \item{weights_y}{the bootstrap or sampling weights for the dataset (Y,Xc).}
+
+\item{constraint}{a vector indicating the different constraints in a vector of the size of X_c indicating the type of constraints, if any on f(X_c) : "concave", "concave", "nondecreasing", "nonincreasing", "nondecreasing_convex", "nondecreasing_concave",  "nonincreasing_convex", "nonincreasing_concave", or NULL for none. Default is NULL, no contraints at all.}
 
 \item{c_sign}{sign restrictions on the commonly observed regressors: -1 for a minus sign, 1 for a plus sign, 0 otherwise. Default is NULL, i.e. no constraints.}
 
@@ -66,19 +65,17 @@ objective_support(
 
 \item{meth}{the method for the choice of epsilon, either "adapt", i.e. adapted to the direction or "min" the minimum over the directions. Default is "adapt".}
 
-\item{boot_par}{the numerical bootstrap parameter. Default is 0.3 without Xc, 0.35 with Xc.}
-
 \item{T_xy}{the apparent sample size the taking into account the difference in the two datasets.}
 
 \item{bc}{if TRUE compute also the bounds on betac. Default is FALSE.}
 
-\item{winsor}{indicates if winsorisation. Default is FALSE.}
-
 \item{version}{version of the computation of the ratio, "first" is a degraded version but fast; "second" is a correct version but slower. Default is "second".}
 
-\item{weights_x_ref}{the sampling weights for the dataset (Xnc,Xc).}
+\item{R2bound}{the lower bound on the R2 of the long regression if any. Default is NULL.}
 
-\item{weights_y_ref}{the sampling weights for the dataset (Y,Xc).}
+\item{values_sel}{the selected values of Xc for the conditioning. Default is NULL.}
+
+\item{ties}{Boolean indicating if there are ties in the dataset. Default is FALSE.}
 }
 \value{
 the value the support function

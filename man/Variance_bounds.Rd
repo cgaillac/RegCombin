@@ -10,6 +10,7 @@ Variance_bounds(
   out_var,
   c_var,
   nc_var,
+  constraint = NULL,
   c_sign = NULL,
   nc_sign = NULL,
   projections = TRUE,
@@ -17,16 +18,15 @@ Variance_bounds(
   sam0,
   refs0,
   nb_pts,
-  kp,
-  Opt,
+  eps_default,
   nbCores,
   Bsamp = 2000,
-  list_ex = NULL,
   weights_x = NULL,
   weights_y = NULL,
   outside = FALSE,
-  boot_par = 0.37,
-  alpha = 0.05
+  alpha = 0.05,
+  values_sel = NULL,
+  seed = 21
 )
 }
 \arguments{
@@ -39,6 +39,8 @@ Variance_bounds(
 \item{c_var}{label of the commonly observed regressors Xc.}
 
 \item{nc_var}{label of the non commonly observed regressors Xnc.}
+
+\item{constraint}{vector of the size of X_c indicating the type of constraint if any on f(X_c) : "monotone", "convex", "sign", or "none". Default is NULL, no contraints at all.}
 
 \item{c_sign}{sign restrictions on the commonly observed regressors: -1 for a minus sign, 1 for a plus sign, 0 otherwise. Default is NULL, i.e. no constraints.}
 
@@ -54,15 +56,11 @@ Variance_bounds(
 
 \item{nb_pts}{the constant C in DGM for the epsilon_0, the lower bound on the grid for epsilon, taken equal to nb_pts*ln(n)/n. Default is 1 without regressors Xc, 3 with Xc.}
 
-\item{kp}{If data_k =NULL, then epsilon is taken equal to kp.}
-
-\item{Opt}{the option of the method to compute the critical values, either "boot" (numerical bootstrap) or "subsampling". Default is numerical bootstrap.}
+\item{eps_default}{If data_k =NULL, then epsilon is taken equal to eps_default.}
 
 \item{nbCores}{number of cores for the parallel computation. Default is 1.}
 
 \item{Bsamp}{the number of bootstrap/subsampling replications. Default is 1000.}
-
-\item{list_ex}{the list of the data that should not be used on the different clusters. This reduces the computational cost. Default is empty list.}
 
 \item{weights_x}{the sampling weights for the dataset (Xnc,Xc).}
 
@@ -70,9 +68,11 @@ Variance_bounds(
 
 \item{outside}{if TRUE indicates that the parallel computing has been launched outside of the function. Default is FALSE.}
 
-\item{boot_par}{the numerical bootstrap parameter. Default is 0.3 without Xc, 0.35 with Xc.}
-
 \item{alpha}{for the level of the confidence region. Default is 0.05.}
+
+\item{values_sel}{the selected values of Xc for the conditioning. Default is NULL.}
+
+\item{seed}{set a seed to fix the subsampling replications}
 }
 \value{
 a list containing, in order:

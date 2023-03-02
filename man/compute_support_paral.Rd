@@ -8,8 +8,8 @@ compute_support_paral(
   dir_nb,
   sam0,
   Xnc,
-  kp0,
-  data_k,
+  eps_default0,
+  grid,
   dimXc,
   dimXnc,
   Xc_xb = NULL,
@@ -17,20 +17,19 @@ compute_support_paral(
   Xc_yb = NULL,
   Yb,
   values,
-  Opt,
   weights_x,
   weights_y,
+  constraint = NULL,
   c_sign,
   nc_sign,
   refs0,
   meth,
-  boot_par,
   T_xy,
   bc,
-  winsor,
   version,
-  weights_xs,
-  weights_ys
+  R2bound = NULL,
+  values_sel = NULL,
+  ties = FALSE
 )
 }
 \arguments{
@@ -40,9 +39,9 @@ compute_support_paral(
 
 \item{Xnc}{the noncommon regressor on the dataset  (Xnc,Xc). No default}
 
-\item{kp0}{the matrix containing the directions q and the selected epsilon(q)}
+\item{eps_default0}{the matrix containing the directions q and the selected epsilon(q)}
 
-\item{data_k}{the number of points for the grid search on epsilon. Default is 30. If NULL, then epsilon is taken fixed equal to kp.}
+\item{grid}{the number of points for the grid search on epsilon. Default is 30. If NULL, then epsilon is taken fixed equal to kp.}
 
 \item{dimXc}{the dimension of the common regressors Xc.}
 
@@ -58,11 +57,11 @@ compute_support_paral(
 
 \item{values}{the different unique points of support of the common regressor Xc.}
 
-\item{Opt}{the option of the method to compute the critical values, either "boot" (numerical bootstrap) or "subsampling". Default is numerical bootstrap.}
-
 \item{weights_x}{the bootstrap or sampling weights for the dataset (Xnc,Xc).}
 
 \item{weights_y}{the bootstrap or sampling weights for the dataset (Y,Xc).}
+
+\item{constraint}{a vector indicating the different constraints in a vector of the size of X_c indicating the type of constraints, if any on f(X_c) : "concave", "concave", "nondecreasing", "nonincreasing", "nondecreasing_convex", "nondecreasing_concave",  "nonincreasing_convex", "nonincreasing_concave", or NULL for none. Default is NULL, no contraints at all.#' @param nc_sign if sign restrictions on the non-commonly observed regressors Xnc: -1 for a minus sign, 1 for a plus sign, 0 otherwise. Default is NULL, i.e. no constraints.}
 
 \item{c_sign}{sign restrictions on the commonly observed regressors: -1 for a minus sign, 1 for a plus sign, 0 otherwise. Default is NULL, i.e. no constraints.}
 
@@ -72,19 +71,17 @@ compute_support_paral(
 
 \item{meth}{the method for the choice of epsilon, either "adapt", i.e. adapted to the direction or "min" the minimum over the directions. Default is "adapt".}
 
-\item{boot_par}{the numerical bootstrap parameter. Default is 0.3 without Xc, 0.35 with Xc.}
-
 \item{T_xy}{the apparent sample size the taking into account the difference in the two datasets.}
 
 \item{bc}{if TRUE compute also the bounds on betac. Default is FALSE.}
 
-\item{winsor}{indicates if winsorisation. Default is FALSE.}
+\item{version}{version of the computation of the ratio, "first" indicates no weights, no ties, same sizes of the two datasets; "second" otherwise. Default is "second".}
 
-\item{version}{version of the computation of the ratio, "first" is a degraded version but fast; "second" is a correct version but slower. Default is "second".}
+\item{R2bound}{the lower bound on the R2 of the long regression if any. Default is NULL.}
 
-\item{weights_xs}{the sampling weights for the dataset (Xnc,Xc).}
+\item{values_sel}{the selected values of Xc for the conditioning. Default is NULL.}
 
-\item{weights_ys}{the bootstrap or sampling weights for the dataset (Y,Xc).}
+\item{ties}{Boolean indicating if there are ties in the dataset. Default is FALSE.}
 }
 \value{
 the value of the support function in the specifed direction dir_nb.
